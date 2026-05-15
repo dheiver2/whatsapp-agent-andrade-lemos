@@ -1,0 +1,14 @@
+{
+  "followup": {
+    "1": "Olá! Tudo bem? Conseguiu ver minha mensagem? Seu reajuste pode estar acima do permitido."
+  },
+  "post_meeting": {
+    "1": "Oi, {nome}. Tudo bem?\n\nGostaria de reforçar um ponto importante: seu caso realmente apresenta fundamentos sólidos para revisão do reajuste.\n\nSe fizer sentido para você, já podemos seguir com os próximos passos ainda essa semana.",
+    "2": "Olá, {nome}.\n\nVocê conseguiu avaliar com calma tudo o que conversamos na reunião?\n\nSe quiser, posso te relembrar de forma objetiva os benefícios práticos de iniciar agora.",
+    "3": "{nome}, queria te fazer uma pergunta direta:\n\nQuanto você ainda pretende pagar a mais aguardando para decidir?\n\nQuanto antes iniciarmos, antes você interrompe esse impacto financeiro.",
+    "4": "Quero reforçar algo importante:\n\nA ação serve justamente para proteger seu contrato e evitar qualquer risco de cancelamento enquanto discutimos o reajuste.\n\nSe essa era uma preocupação sua, pode ficar tranquilo.\n\nQuer que a gente avance?",
+    "5": "{nome}, estou organizando os casos que vão avançar essa semana.\n\nPrefere que eu já reserve sua entrada agora ou quer retomar em outro momento específico?",
+    "6": "Posso facilitar para você:\n\nPrefere que eu envie novamente o link para assinatura do contrato ou quer que eu te ligue para alinharmos rapidamente?",
+    "7": "{nome}, deixo essa como minha última mensagem por agora para respeitar seu tempo.\n\nQuando decidir seguir com a revisão do plano, é só me avisar que retomamos imediatamente.\n\nEstou à disposição."
+  }
+}

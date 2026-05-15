@@ -110,6 +110,29 @@ export interface LlmInfo {
   error?: string;
 }
 
+export interface FunnelData {
+  etapas: { label: string; value: number }[];
+  perdidos: number;
+  conversao_total: number;
+  conversao_agendamento: number;
+  conversao_fechamento: number;
+}
+
+export interface WorkerInfo {
+  name: string;
+  schedule: string;
+  log: string;
+  script: string;
+  last_line: string;
+  last_mod: string;
+  log_size: number;
+}
+
+export interface Templates {
+  followup: Record<string, string>;
+  post_meeting: Record<string, string>;
+}
+
 export const CENARIO_LABEL: Record<string, string> = {
   falso_coletivo: "Falso Coletivo",
   multifamiliar: "Multifamiliar",
@@ -128,6 +151,18 @@ export const CENARIO_COLOR: Record<string, string> = {
   indefinido: "secondary",
 };
 
+export const LEAD_STATUSES = [
+  "ai_active",
+  "waiting_human",
+  "scheduled",
+  "won",
+  "contrato_fechado",
+  "sem_interesse",
+  "1_2_viavel",
+  "inviavel",
+  "outbound_pending",
+];
+
 export const api = {
   dashboardStats: () => call<DashboardStats>("/api/admin/dashboard"),
   conversations: () => call<ConversationSummary[]>("/api/admin/conversations"),
@@ -143,4 +178,31 @@ export const api = {
   logs: () => call<LogBlock[]>("/api/admin/logs"),
   llmInfo: () => call<LlmInfo>("/api/admin/llm-info"),
   health: () => call<{ status: string }>("/health"),
+
+  // NEW
+  envGet: () => call<Record<string, string>>("/api/admin/env"),
+  envSet: (data: Record<string, string>) =>
+    call("/api/admin/env", { method: "POST", body: JSON.stringify(data) }),
+  templatesGet: () => call<Templates>("/api/admin/templates"),
+  templatesSet: (data: Partial<Templates>) =>
+    call("/api/admin/templates", { method: "POST", body: JSON.stringify(data) }),
+  leadStatus: (phone: string, lead_status: string) =>
+    call(`/api/admin/leads/${encodeURIComponent(phone)}/status`, {
+      method: "POST",
+      body: JSON.stringify({ lead_status }),
+    }),
+  leadPause: (phone: string, reason = "manual via admin") =>
+    call(`/api/admin/leads/${encodeURIComponent(phone)}/pause`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    }),
+  leadResume: (phone: string) =>
+    call(`/api/admin/leads/${encodeURIComponent(phone)}/resume`, { method: "POST" }),
+  leadSend: (phone: string, message: string) =>
+    call(`/api/admin/leads/${encodeURIComponent(phone)}/send`, {
+      method: "POST",
+      body: JSON.stringify({ message }),
+    }),
+  funnel: () => call<FunnelData>("/api/admin/funnel"),
+  workers: () => call<WorkerInfo[]>("/api/admin/workers"),
 };

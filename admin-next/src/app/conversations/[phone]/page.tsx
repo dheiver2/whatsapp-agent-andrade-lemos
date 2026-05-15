@@ -1,22 +1,54 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Check, CheckCheck, Calendar, User } from "lucide-react";
-import { api, CENARIO_LABEL, CENARIO_COLOR } from "@/lib/api";
+import { ArrowLeft, CheckCheck, Calendar, Send, Pause, Play, Tag } from "lucide-react";
+import { toast } from "sonner";
+import { api, CENARIO_LABEL, CENARIO_COLOR, LEAD_STATUSES } from "@/lib/api";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge, Skeleton } from "@/components/ui/index";
+import { Badge, Skeleton, Input } from "@/components/ui/index";
 import { Button } from "@/components/ui/button";
 
 export default function ConvDetailPage() {
   const { phone } = useParams<{ phone: string }>();
   const decoded = decodeURIComponent(phone);
+  const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["conversation", decoded],
     queryFn: () => api.conversation(decoded),
+    refetchInterval: 15_000,
   });
+
+  const [manualMsg, setManualMsg] = useState("");
+
+  const send = useMutation({
+    mutationFn: (m: string) => api.leadSend(decoded, m),
+    onSuccess: () => { toast.success("Mensagem enviada"); setManualMsg(""); qc.invalidateQueries({ queryKey: ["conversation", decoded] }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const setStatus = useMutation({
+    mutationFn: (s: string) => api.leadStatus(decoded, s),
+    onSuccess: () => { toast.success("Status atualizado"); qc.invalidateQueries({ queryKey: ["conversation", decoded] }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const pause = useMutation({
+    mutationFn: () => api.leadPause(decoded),
+    onSuccess: () => { toast.success("IA pausada para este lead"); qc.invalidateQueries({ queryKey: ["conversation", decoded] }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const resume = useMutation({
+    mutationFn: () => api.leadResume(decoded),
+    onSuccess: () => { toast.success("IA retomada"); qc.invalidateQueries({ queryKey: ["conversation", decoded] }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const paused = data?.profile?.lead_status === "waiting_human";
 
   return (
     <>
@@ -33,8 +65,41 @@ export default function ConvDetailPage() {
       />
 
       <div className="p-6 grid lg:grid-cols-3 gap-6">
-        {/* Sidebar com dados */}
         <div className="space-y-4 lg:order-2">
+          {/* AÇÕES POR LEAD */}
+          <Card className="border-primary/30">
+            <CardContent className="p-5 space-y-3">
+              <h3 className="text-xs uppercase text-muted-foreground font-semibold">Ações</h3>
+              <div className="flex flex-wrap gap-2">
+                {paused ? (
+                  <Button size="sm" onClick={() => resume.mutate()} disabled={resume.isPending}>
+                    <Play className="size-3.5 mr-1" /> Retomar IA
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={() => pause.mutate()} disabled={pause.isPending}>
+                    <Pause className="size-3.5 mr-1" /> Pausar IA
+                  </Button>
+                )}
+                <Button size="sm" variant="outline" onClick={() => setStatus.mutate("won")} disabled={setStatus.isPending}>
+                  <Tag className="size-3.5 mr-1" /> Ganho
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setStatus.mutate("sem_interesse")} disabled={setStatus.isPending}>
+                  <Tag className="size-3.5 mr-1" /> Sem interesse
+                </Button>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Alterar status:</label>
+                <select
+                  className="w-full mt-1 p-2 text-sm border rounded-md bg-background"
+                  value={data?.profile?.lead_status || ""}
+                  onChange={(e) => setStatus.mutate(e.target.value)}
+                >
+                  {LEAD_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardContent className="p-5">
               <h3 className="text-xs uppercase text-muted-foreground font-semibold mb-3">Dados coletados</h3>
@@ -71,6 +136,8 @@ export default function ConvDetailPage() {
               <h3 className="text-xs uppercase text-muted-foreground font-semibold mb-3">Estado</h3>
               <DataRow label="Etapa" value={data?.stage} />
               <DataRow label="Status" value={data?.profile?.lead_status} />
+              <DataRow label="Follow-up D+" value={String(data?.profile?.last_followup_day || 0)} />
+              <DataRow label="Pós-reunião Dia" value={String(data?.profile?.post_meeting_day || 0)} />
               <DataRow label="Telefone" value={decoded} mono />
             </CardContent>
           </Card>
@@ -82,11 +149,6 @@ export default function ConvDetailPage() {
                   <Calendar className="size-3.5" /> Consulta agendada
                 </h3>
                 <div className="text-lg font-semibold">{data?.slot_str || "—"}</div>
-                {data?.profile?.calendar_event_id && (
-                  <div className="text-[10px] text-muted-foreground font-mono mt-1">
-                    {data.profile.calendar_event_id}
-                  </div>
-                )}
               </CardContent>
             </Card>
           ) : null}
@@ -101,7 +163,6 @@ export default function ConvDetailPage() {
           )}
         </div>
 
-        {/* WhatsApp-like chat */}
         <div className="lg:col-span-2 lg:order-1">
           <Card className="overflow-hidden">
             <div className="bg-primary/90 text-primary-foreground p-3 flex items-center gap-3">
@@ -115,22 +176,22 @@ export default function ConvDetailPage() {
                     {data?.stage || "..."}
                   </Badge>
                   {data?.history && <span className="opacity-80">{data.history.length} mensagens</span>}
+                  {paused && <Badge variant="warning" className="text-[10px]">IA PAUSADA</Badge>}
                 </div>
               </div>
             </div>
 
-            <div className="whatsapp-bg-light dark:whatsapp-bg p-4 max-h-[70vh] overflow-y-auto">
+            <div className="whatsapp-bg-light dark:whatsapp-bg p-4 max-h-[60vh] overflow-y-auto">
               {isLoading ? (
                 <div className="space-y-3">
                   <Skeleton className="h-16 w-2/3" />
                   <Skeleton className="h-12 w-1/2 ml-auto" />
-                  <Skeleton className="h-20 w-3/4" />
                 </div>
               ) : !data?.history?.length ? (
                 <div className="text-center text-sm text-muted-foreground py-12">Sem mensagens.</div>
               ) : (
                 <div className="space-y-2">
-                  {data.history.map((m, i) => (
+                  {data.history.map((m: any, i: number) => (
                     <motion.div
                       key={i}
                       initial={{ opacity: 0, y: 4 }}
@@ -147,6 +208,7 @@ export default function ConvDetailPage() {
                       >
                         <p className="text-sm whitespace-pre-wrap text-zinc-900 dark:text-zinc-100">{m.content}</p>
                         <div className="flex items-center justify-end gap-1 mt-0.5 text-[10px] text-muted-foreground">
+                          {m.manual_by && <span className="text-amber-600">manual:{m.manual_by}</span>}
                           {m.role !== "user" && <CheckCheck className="size-3 text-blue-500" />}
                         </div>
                       </div>
@@ -154,6 +216,22 @@ export default function ConvDetailPage() {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Envio manual */}
+            <div className="border-t p-3 flex gap-2 bg-card">
+              <Input
+                placeholder="Digite uma mensagem manual..."
+                value={manualMsg}
+                onChange={(e) => setManualMsg(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && manualMsg.trim()) send.mutate(manualMsg.trim()); }}
+              />
+              <Button
+                onClick={() => manualMsg.trim() && send.mutate(manualMsg.trim())}
+                disabled={send.isPending || !manualMsg.trim()}
+              >
+                <Send className="size-4" />
+              </Button>
             </div>
           </Card>
         </div>

@@ -13,6 +13,7 @@ import {
   Scale,
   LogOut,
   ExternalLink,
+  Cpu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme-toggle";
@@ -23,6 +24,7 @@ const items = [
   { href: "/conversations", label: "Conversas", icon: MessagesSquare },
   { href: "/agenda", label: "Agenda", icon: Calendar },
   { href: "/knowledge", label: "Knowledge", icon: BookOpen },
+  { href: "/workers", label: "Workers", icon: Cpu },
   { href: "/logs", label: "Logs", icon: ScrollText },
   { href: "/control", label: "Controle", icon: Settings2 },
   { href: "/qr", label: "QR Code", icon: QrCode },
@@ -90,7 +92,6 @@ export function Sidebar() {
 
 export function MobileNav() {
   const pathname = usePathname();
-  // mostra 4 principais no mobile (mais limpo)
   const mobileItems = items.slice(0, 4);
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

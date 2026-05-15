@@ -31,6 +31,7 @@ import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge, Skeleton } from "@/components/ui/index";
 import { PageHeader } from "@/components/page-header";
+import { FunnelCard } from "@/components/funnel-card";
 
 const COLORS = ["#25D366", "#34E07A", "#128C7E", "#0a8068", "#D4AF37", "#8E44AD", "#3498DB", "#E67E22"];
 
@@ -67,7 +68,8 @@ export default function DashboardPage() {
       />
 
       <div className="p-6 space-y-6">
-        {/* KPI cards */}
+        <FunnelCard />
+      {/* KPI cards */}
         <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
           <StatCard
             label="Total de leads"
