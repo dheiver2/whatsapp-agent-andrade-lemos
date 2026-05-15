@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="flex items-baseline justify-between mb-6">
+  <h1 class="text-2xl font-bold">Dashboard</h1>
+  <span class="text-sm text-slate-400">{{ now }}</span>
+</div>
+
+<!-- Status cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+  <div class="bg-slate-900 rounded-xl p-5 border border-slate-800">
+    <div class="text-slate-400 text-sm">WhatsApp</div>
+    <div class="text-2xl font-bold mt-1">
+      {% if wa_status == "connected" %}<span class="text-green-400">🟢 Conectado</span>
+      {% elif wa_status == "waiting" %}<span class="text-yellow-400">🟡 Aguardando QR</span>
+      {% else %}<span class="text-red-400">🔴 {{ wa_status }}</span>{% endif %}
+    </div>
+  </div>
+  <div class="bg-slate-900 rounded-xl p-5 border border-slate-800">
+    <div class="text-slate-400 text-sm">API (IA + Calendar)</div>
+    <div class="text-2xl font-bold mt-1">
+      {% if api_status == "ok" %}<span class="text-green-400">🟢 Healthy</span>
+      {% else %}<span class="text-red-400">🔴 {{ api_status }}</span>{% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Métricas -->
+<h2 class="text-lg font-semibold mb-3 mt-8">Leads</h2>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+  <div class="bg-slate-900 rounded-lg p-4 border border-slate-800">
+    <div class="text-slate-400 text-xs uppercase">Total</div>
+    <div class="text-3xl font-bold mt-1">{{ metrics.total_leads }}</div>
+  </div>
+  <div class="bg-emerald-900/30 rounded-lg p-4 border border-emerald-800/50">
+    <div class="text-emerald-300 text-xs uppercase">Agendados</div>
+    <div class="text-3xl font-bold mt-1 text-emerald-300">{{ metrics.agendados }}</div>
+  </div>
+  <div class="bg-yellow-900/30 rounded-lg p-4 border border-yellow-800/50">
+    <div class="text-yellow-300 text-xs uppercase">Qualificando</div>
+    <div class="text-3xl font-bold mt-1 text-yellow-300">{{ metrics.qualificando }}</div>
+  </div>
+  <div class="bg-red-900/30 rounded-lg p-4 border border-red-800/50">
+    <div class="text-red-300 text-xs uppercase">Handoff humano</div>
+    <div class="text-3xl font-bold mt-1 text-red-300">{{ metrics.perdidos }}</div>
+  </div>
+</div>
+
+<!-- Próximas consultas -->
+<h2 class="text-lg font-semibold mb-3 mt-8">Próximas consultas (7 dias)</h2>
+<div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
+  {% if consultas %}
+  <table class="w-full text-sm">
+    <thead class="bg-slate-800">
+      <tr>
+        <th class="text-left px-4 py-2">Quando</th>
+        <th class="text-left px-4 py-2">Evento</th>
+        <th class="text-left px-4 py-2">Origem</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in consultas %}
+      <tr class="border-t border-slate-800">
+        <td class="px-4 py-2 whitespace-nowrap">{{ c.inicio }}</td>
+        <td class="px-4 py-2">{{ c.titulo }}</td>
+        <td class="px-4 py-2">
+          {% if c.criado_pelo_bot %}<span class="text-emerald-400 text-xs">🤖 Bot</span>
+          {% else %}<span class="text-slate-500 text-xs">manual</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="p-4 text-slate-400">Nenhuma consulta nos próximos 7 dias.</div>
+  {% endif %}
+</div>
+
+<!-- Ações rápidas -->
+<h2 class="text-lg font-semibold mb-3 mt-8">Ações rápidas</h2>
+<div class="flex flex-wrap gap-2">
+  <a href="/conversations" class="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg">Ver conversas</a>
+  <a href="/agenda" class="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg">Ver agenda</a>
+  <a href="/knowledge" class="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg">Editar prompts</a>
+  <a href="/qr" class="bg-emerald-700 hover:bg-emerald-600 px-4 py-2 rounded-lg">Ver QR Code</a>
+</div>
+
+{% endblock %}

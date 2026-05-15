@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Agenda do Dr. Filipe (próximos 30 dias)</h1>
+<div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-800">
+      <tr>
+        <th class="text-left px-3 py-2">Quando</th>
+        <th class="text-left px-3 py-2">Evento</th>
+        <th class="text-left px-3 py-2">Origem</th>
+        <th class="text-left px-3 py-2"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in consultas %}
+      <tr class="border-t border-slate-800">
+        <td class="px-3 py-2 whitespace-nowrap font-mono text-xs">
+          {% if c.all_day %}{{ c.inicio_short }} (dia inteiro){% else %}{{ c.inicio_short }}{% if c.fim_hour %} – {{ c.fim_hour }}{% endif %}{% endif %}
+        </td>
+        <td class="px-3 py-2">{{ c.titulo }}</td>
+        <td class="px-3 py-2">
+          {% if c.criado_pelo_bot %}<span class="text-emerald-400 text-xs">🤖 Bot</span>
+          {% else %}<span class="text-slate-500 text-xs">manual</span>{% endif %}
+        </td>
+        <td class="px-3 py-2">
+          {% if c.html_link %}<a href="{{ c.html_link }}" target="_blank" class="text-blue-400 text-xs hover:underline">abrir →</a>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not consultas %}
+      <tr><td colspan="4" class="px-3 py-6 text-center text-slate-400">Agenda vazia.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

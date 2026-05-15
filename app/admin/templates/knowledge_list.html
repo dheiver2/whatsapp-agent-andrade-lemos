@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-2">Knowledge Base</h1>
+<p class="text-slate-400 text-sm mb-4">Arquivos consultados pela IA. Edição salva backup automático e força reindex do RAG.</p>
+
+<div class="grid gap-2">
+  {% for f in files %}
+  <a href="/knowledge/{{ f.name }}" class="block bg-slate-900 hover:bg-slate-800 rounded-lg p-4 border border-slate-800 transition">
+    <div class="flex items-center justify-between">
+      <div class="font-mono text-sm">📄 {{ f.name }}</div>
+      <div class="text-xs text-slate-400">{{ f.size }} bytes · {{ f.modified }}</div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}

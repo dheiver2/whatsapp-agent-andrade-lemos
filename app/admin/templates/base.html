@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Admin · Andrade & Lemos{% endblock %}</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+<style>
+body { font-family: 'Inter', system-ui, sans-serif; }
+.btn { @apply px-4 py-2 rounded-lg font-medium transition; }
+</style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+<nav class="bg-slate-900 border-b border-slate-800 sticky top-0 z-10">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-2">
+    <a href="/" class="font-bold text-green-400 text-lg">⚖️ Andrade & Lemos · Admin</a>
+    <div class="flex gap-1 text-sm flex-wrap">
+      <a href="/" class="px-3 py-1.5 rounded hover:bg-slate-800">Dashboard</a>
+      <a href="/conversations" class="px-3 py-1.5 rounded hover:bg-slate-800">Conversas</a>
+      <a href="/agenda" class="px-3 py-1.5 rounded hover:bg-slate-800">Agenda</a>
+      <a href="/knowledge" class="px-3 py-1.5 rounded hover:bg-slate-800">Knowledge</a>
+      <a href="/logs" class="px-3 py-1.5 rounded hover:bg-slate-800">Logs</a>
+      <a href="/control" class="px-3 py-1.5 rounded hover:bg-slate-800">Controle</a>
+      <a href="/qr" class="px-3 py-1.5 rounded hover:bg-slate-800">QR</a>
+    </div>
+  </div>
+</nav>
+
+<main class="max-w-7xl mx-auto px-4 py-6">
+  {% block content %}{% endblock %}
+</main>
+
+</body>
+</html>

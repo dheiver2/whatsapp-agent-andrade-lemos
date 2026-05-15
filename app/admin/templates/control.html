@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Controle</h1>
+<p class="text-slate-400 text-sm mb-6">Ações que afetam o estado do bot. Devido a AppArmor do snap-docker, algumas precisam ser executadas via SSH.</p>
+
+<div class="grid md:grid-cols-2 gap-4">
+  <div class="bg-slate-900 rounded-xl p-5 border border-slate-800">
+    <h2 class="font-semibold mb-2">⏸️ Pausar atendimento</h2>
+    <p class="text-sm text-slate-400 mb-3">Para o bot de receber mensagens. Conversas em andamento ficam salvas.</p>
+    <button hx-post="/control/whatsapp/pause" hx-target="#out-pause" class="bg-yellow-600 hover:bg-yellow-500 px-4 py-2 rounded-lg">Pausar</button>
+    <pre id="out-pause" class="text-xs text-slate-400 mt-2 font-mono whitespace-pre-wrap"></pre>
+  </div>
+
+  <div class="bg-slate-900 rounded-xl p-5 border border-slate-800">
+    <h2 class="font-semibold mb-2">▶️ Retomar atendimento</h2>
+    <p class="text-sm text-slate-400 mb-3">Religa o bot. Sessão é restaurada automaticamente.</p>
+    <button hx-post="/control/whatsapp/resume" hx-target="#out-resume" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg">Retomar</button>
+    <pre id="out-resume" class="text-xs text-slate-400 mt-2 font-mono whitespace-pre-wrap"></pre>
+  </div>
+
+  <div class="bg-slate-900 rounded-xl p-5 border border-slate-800">
+    <h2 class="font-semibold mb-2">🔄 Trocar número (novo QR)</h2>
+    <p class="text-sm text-slate-400 mb-3">Apaga sessão atual e gera QR novo. Cliente atual desconecta.</p>
+    <button hx-post="/control/whatsapp/reset" hx-target="#out-reset" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg">Resetar sessão</button>
+    <pre id="out-reset" class="text-xs text-slate-400 mt-2 font-mono whitespace-pre-wrap"></pre>
+  </div>
+
+  <div class="bg-slate-900 rounded-xl p-5 border border-slate-800">
+    <h2 class="font-semibold mb-2">📱 Ver QR Code</h2>
+    <p class="text-sm text-slate-400 mb-3">Página pública pro cliente escanear.</p>
+    <a href="/qr" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg inline-block">Abrir QR</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Conversas ({{ profiles|length }})</h1>
+
+<div class="bg-slate-900 rounded-xl border border-slate-800 overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-800">
+      <tr>
+        <th class="text-left px-3 py-2">Nome</th>
+        <th class="text-left px-3 py-2">Telefone</th>
+        <th class="text-left px-3 py-2">Valor</th>
+        <th class="text-left px-3 py-2">Operadora</th>
+        <th class="text-left px-3 py-2">Modalidade</th>
+        <th class="text-left px-3 py-2">Etapa</th>
+        <th class="text-left px-3 py-2">Status</th>
+        <th class="text-left px-3 py-2">Agendado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in profiles %}
+      <tr class="border-t border-slate-800 hover:bg-slate-800/50 cursor-pointer" onclick="location.href='/conversations/{{ p.phone }}'">
+        <td class="px-3 py-2">{{ p.name }}</td>
+        <td class="px-3 py-2 font-mono text-xs">{{ p.phone }}</td>
+        <td class="px-3 py-2">{{ p.valor_atual }}</td>
+        <td class="px-3 py-2">{{ p.operadora }}</td>
+        <td class="px-3 py-2 text-xs">{{ p.tipo_plano }}</td>
+        <td class="px-3 py-2"><span class="text-xs bg-slate-700 px-2 py-0.5 rounded">{{ p.stage }}</span></td>
+        <td class="px-3 py-2">
+          {% if p.lead_status == "scheduled" %}<span class="text-emerald-400 text-xs">📅 agendado</span>
+          {% elif p.lead_status == "waiting_human" %}<span class="text-yellow-400 text-xs">🙋 humano</span>
+          {% elif p.lead_status == "won" %}<span class="text-emerald-300 text-xs">🏆 ganho</span>
+          {% else %}<span class="text-slate-400 text-xs">{{ p.lead_status }}</span>{% endif %}
+        </td>
+        <td class="px-3 py-2 text-xs">
+          {% if p.confirmed_slot %}{{ p.confirmed_slot.start[:16].replace("T", " ") }}{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not profiles %}
+      <tr><td colspan="8" class="px-3 py-6 text-center text-slate-400">Nenhuma conversa ainda</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

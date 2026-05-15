@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="/knowledge" class="text-slate-400 hover:text-white text-sm">← voltar</a>
+<h1 class="text-2xl font-bold mb-1 mt-2">Editar: <span class="font-mono text-emerald-400">{{ filename }}</span></h1>
+<p class="text-slate-400 text-sm mb-4">Backup automático será criado antes de salvar. Após salvar, o RAG reindexa na próxima inicialização.</p>
+
+{% if request.query_params.get("saved") %}
+<div class="bg-emerald-900/40 border border-emerald-700 text-emerald-200 px-4 py-2 rounded mb-4">✅ Salvo. RAG vai reindexar.</div>
+{% endif %}
+
+<form method="POST" action="/knowledge/{{ filename }}">
+  <textarea name="content" rows="30" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 font-mono text-xs text-slate-100">{{ content }}</textarea>
+  <div class="flex gap-2 mt-3">
+    <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg">Salvar e reindexar</button>
+    <a href="/knowledge" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

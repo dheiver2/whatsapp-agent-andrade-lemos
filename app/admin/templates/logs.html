@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Logs do sistema</h1>
+{% for log in logs_data %}
+<div class="bg-slate-900 rounded-xl border border-slate-800 mb-4 overflow-hidden">
+  <div class="bg-slate-800 px-4 py-2 flex justify-between items-center">
+    <div class="font-semibold">{{ log.label }}</div>
+    <div class="text-xs text-slate-400 font-mono">{{ log.path }}</div>
+  </div>
+  <pre class="p-3 text-xs font-mono text-slate-300 overflow-x-auto max-h-80 overflow-y-auto whitespace-pre-wrap">{{ log.content }}</pre>
+</div>
+{% endfor %}
+{% endblock %}

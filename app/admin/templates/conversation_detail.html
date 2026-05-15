@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="/conversations" class="text-slate-400 hover:text-white text-sm">← voltar</a>
+<h1 class="text-2xl font-bold mb-4 mt-2">{{ profile.name or phone }}</h1>
+
+<div class="grid md:grid-cols-3 gap-4 mb-6">
+  <div class="bg-slate-900 rounded-xl p-4 border border-slate-800">
+    <h2 class="text-slate-400 text-xs uppercase mb-2">Dados coletados</h2>
+    <div class="space-y-1 text-sm">
+      <div><span class="text-slate-400">Valor:</span> {{ profile.valor_atual or "—" }}</div>
+      <div><span class="text-slate-400">Operadora:</span> {{ profile.operadora or "—" }}</div>
+      <div><span class="text-slate-400">Data adesão:</span> {{ profile.data_adesao or "—" }}</div>
+      <div><span class="text-slate-400">Modalidade:</span> {{ profile.tipo_plano or "—" }}</div>
+    </div>
+  </div>
+  <div class="bg-slate-900 rounded-xl p-4 border border-slate-800">
+    <h2 class="text-slate-400 text-xs uppercase mb-2">Estado</h2>
+    <div class="space-y-1 text-sm">
+      <div><span class="text-slate-400">Etapa:</span> {{ stage }}</div>
+      <div><span class="text-slate-400">Status lead:</span> {{ profile.lead_status or "—" }}</div>
+      <div><span class="text-slate-400">Telefone:</span> <span class="font-mono">{{ phone }}</span></div>
+    </div>
+  </div>
+  <div class="bg-slate-900 rounded-xl p-4 border border-slate-800">
+    <h2 class="text-slate-400 text-xs uppercase mb-2">Agendamento</h2>
+    <div class="space-y-1 text-sm">
+      {% if profile.confirmed_slot %}
+        <div class="text-emerald-300">📅 {{ profile.confirmed_slot.start[:16].replace("T", " ") }}</div>
+        <div class="text-xs text-slate-400">Event ID: {{ profile.calendar_event_id }}</div>
+      {% else %}
+        <div class="text-slate-400">Sem agendamento</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% if profile.ai_summary %}
+<div class="bg-slate-900 rounded-xl p-4 border border-slate-800 mb-6">
+  <h2 class="text-slate-400 text-xs uppercase mb-2">Resumo IA</h2>
+  <p class="text-sm">{{ profile.ai_summary }}</p>
+</div>
+{% endif %}
+
+<h2 class="text-lg font-semibold mb-3">Histórico ({{ history|length }} mensagens)</h2>
+<div class="space-y-2">
+  {% for msg in history %}
+    {% if msg.role == "user" %}
+    <div class="flex justify-start">
+      <div class="bg-slate-800 px-3 py-2 rounded-lg max-w-2xl">
+        <div class="text-xs text-slate-400 mb-1">CLIENTE</div>
+        <div class="whitespace-pre-wrap text-sm">{{ msg.content }}</div>
+      </div>
+    </div>
+    {% else %}
+    <div class="flex justify-end">
+      <div class="bg-emerald-900/40 border border-emerald-800/50 px-3 py-2 rounded-lg max-w-2xl">
+        <div class="text-xs text-emerald-300 mb-1">NATASHA</div>
+        <div class="whitespace-pre-wrap text-sm">{{ msg.content }}</div>
+      </div>
+    </div>
+    {% endif %}
+  {% endfor %}
+  {% if not history %}
+  <div class="text-slate-400">Sem mensagens.</div>
+  {% endif %}
+</div>
+{% endblock %}
