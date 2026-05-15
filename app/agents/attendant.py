@@ -4,6 +4,7 @@ import logging
 import re
 from datetime import datetime
 
+from app.agents.cenario import classify_cenario, diagnostic_message, is_viable
 from app.agents.router import (
     BUSINESS_DAYS,
     BUSINESS_HOUR_END,
@@ -37,14 +38,16 @@ WEEKDAYS_PT = ["segunda", "terça", "quarta", "quinta", "sexta", "sábado", "dom
 QUALIFICATION_FIELD_LABELS = {
     "valor atual do plano": ("valor_atual",),
     "operadora": ("operadora",),
-    "data de adesão": ("data_adesao",),
-    "modalidade (empresarial, por adesão, etc.)": ("tipo_plano",),
+    "modalidade (individual, familiar, coletivo por adesão ou empresarial)": ("tipo_plano",),
+    "se os beneficiários são todos da mesma família": ("beneficiarios_familia",),
+    "ano de contratação do plano": ("data_adesao",),
 }
 MINIMUM_QUALIFICATION_KEYS = (
     "operadora",
     "tipo_plano",
     "valor_atual",
     "data_adesao",
+    "beneficiarios_familia",
 )
 COST_QUESTION_PATTERNS = (
     r"\b(?:tem\s+(?:algum\s+)?(?:custo|preco|valor)|quanto\s+(?:custa|sai|fica|cobra)|"
@@ -185,6 +188,25 @@ SOFTENING_REPLACEMENTS = (
 )
 
 
+
+EMAIL_RE = re.compile(r"\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\\b")
+
+
+def _parse_nome_email(text: str) -> tuple[str | None, str | None]:
+    """Extrai nome completo e email de uma mensagem."""
+    email_match = EMAIL_RE.search(text)
+    email = email_match.group(0) if email_match else None
+    # remove email do texto pra capturar nome
+    text_wo = text.replace(email, "") if email else text
+    # remove pontuação comum
+    text_wo = re.sub(r"[\\n,;]+", " ", text_wo).strip()
+    # nome = sequência de palavras com letras (pega 2+ palavras pra ser nome completo)
+    name_match = re.search(r"[A-Za-zÀ-ÿ]+(?:\\s+[A-Za-zÀ-ÿ]+){1,}", text_wo)
+    name = name_match.group(0).strip() if name_match else None
+    return name, email
+
+
+
 class AttendantAgent:
     """Orchestrates the WhatsApp conversation flow for Andrade & Lemos."""
 
@@ -322,28 +344,61 @@ class AttendantAgent:
         nome = profile.get("name", "")
         pending_slots = profile.get("pending_slots") or []
 
-        # 9a. Cliente escolheu um slot pendente -> cria evento
+        # 9a. Cliente escolheu slot -> primeiro pede nome+email, depois cria evento
         if (
             allow_scheduling_link
             and pending_slots
             and not profile.get("confirmed_slot")
         ):
-            chosen = parse_slot_choice(text, pending_slots)
-            if chosen:
-                try:
-                    event = await confirm_and_book(chosen, nome, phone)
-                    profile["confirmed_slot"] = chosen
-                    profile["calendar_event_id"] = event.get("id")
-                    profile["pending_slots"] = []
-                    response = format_confirmation_message(chosen, nome)
-                    new_stage = "confirmacao_consulta"
-                    booking_completed = True
-                except Exception as exc:
-                    logger.exception("Falha ao criar evento no Calendar: %s", exc)
+            # Se já estamos esperando nome+email
+            if profile.get("awaiting_name_email"):
+                parsed_name, parsed_email = _parse_nome_email(text)
+                if parsed_email:
+                    profile["name_full"] = parsed_name or profile.get("name", "")
+                    profile["email"] = parsed_email
+                    profile["awaiting_name_email"] = False
+                    chosen = profile.get("chosen_slot")
+                    if chosen:
+                        try:
+                            event = await confirm_and_book(
+                                chosen,
+                                profile.get("name_full") or profile.get("name", ""),
+                                phone,
+                            )
+                            profile["confirmed_slot"] = chosen
+                            profile["calendar_event_id"] = event.get("id")
+                            profile["pending_slots"] = []
+                            profile.pop("chosen_slot", None)
+                            response = format_confirmation_message(
+                                chosen, profile.get("name_full") or nome
+                            )
+                            new_stage = "confirmacao_consulta"
+                            booking_completed = True
+                        except Exception as exc:
+                            logger.exception("Falha ao criar evento: %s", exc)
+                            response = (
+                                f"{nome + ', ' if nome else ''}tive um problema técnico. "
+                                "Vou pedir para alguém da equipe finalizar. Pode aguardar?"
+                            )
+                else:
+                    # Email não veio, pede de novo
                     response = (
-                        f"{nome + ', ' if nome else ''}tive um problema técnico para confirmar agora. "
-                        "Vou pedir para alguém da equipe finalizar com você. Pode aguardar?"
+                        f"{nome + ', ' if nome else ''}preciso do seu nome completo e email "
+                        "para confirmar a reunião. Pode enviar?"
                     )
+                    booking_completed = True  # bloqueia outras lógicas
+
+            else:
+                chosen = parse_slot_choice(text, pending_slots)
+                if chosen:
+                    # Em vez de criar evento direto, pede nome+email primeiro (conforme doc)
+                    profile["awaiting_name_email"] = True
+                    profile["chosen_slot"] = chosen
+                    response = (
+                        f"{nome + ', ' if nome else ''}ótimo! Para confirmar, "
+                        "envie-me seu nome completo e email, por gentileza."
+                    )
+                    booking_completed = True
 
         # 9b. Hora de oferecer slots (com preferência do cliente)
         if (
@@ -429,8 +484,9 @@ class AttendantAgent:
         fields = {
             "operadora": "Operadora",
             "tipo_plano": "Modalidade",
-            "valor_atual": "Valor atual do plano",
-            "data_adesao": "Data de adesão",
+            "valor_atual": "Valor atual",
+            "beneficiarios_familia": "Beneficiários da mesma família",
+            "data_adesao": "Ano de contratação",
             "preferred_datetime": "Preferência de horário",
         }
         for key, label in fields.items():
@@ -464,7 +520,7 @@ class AttendantAgent:
                 "mensalidade",
             ],
             "operadora": ["operadora"],
-            "modalidade (empresarial, por adesão, etc.)": ["modalidade", "tipo do plano", "individual", "familiar", "coletivo", "empresarial", "adesão"],
+            "modalidade (individual, familiar, coletivo por adesão ou empresarial)": ["modalidade", "tipo do plano", "individual", "familiar", "coletivo", "empresarial", "adesão"],
             "data de adesão": ["data de adesão", "quando você aderiu", "quando contratou", "data da adesão", "data de contratação"],
         }
 
@@ -680,6 +736,16 @@ class AttendantAgent:
         profile: dict,
         slot_suggestions: list[str],
     ) -> str:
+        # Usa diagnóstico determinístico do cenário conforme documento oficial
+        cenario = classify_cenario(profile)
+        diag = diagnostic_message(cenario, name=name, profile=profile)
+        if diag:
+            # Para cenários viáveis (falso coletivo / multifamiliar), inclui CTA de agenda
+            if is_viable(cenario):
+                return diag + "\n\nPodemos agendar uma chamada de vídeo com o Dr. Filipe. Quer que eu veja os horários disponíveis?"
+            # Para coletivo_adesao, individual, inviavel: só mostra diagnóstico (precisa de info adicional)
+            return diag
+        # Fallback para o comportamento antigo
         prefix = f"{name}, " if name else ""
         operadora = profile.get("operadora", "seu plano")
         tipo_plano = profile.get("tipo_plano", "plano")

@@ -7,7 +7,6 @@ function getAuthHeader(): string {
     const creds = sessionStorage.getItem("admin_creds");
     if (creds) return "Basic " + creds;
   }
-  // server fallback (env)
   const u = process.env.ADMIN_USER || "dheiver";
   const p = process.env.ADMIN_PASS || "andradelemos2026";
   return "Basic " + Buffer.from(`${u}:${p}`).toString("base64");
@@ -43,11 +42,15 @@ export interface DashboardStats {
   por_operadora: { name: string; value: number }[];
   funil: { etapa: string; count: number }[];
   por_modalidade: { name: string; value: number }[];
+  por_cenario: { name: string; value: number }[];
+  multimodal: { audios: number; imagens: number };
 }
 
 export interface ConversationSummary {
   phone: string;
   name: string;
+  name_full: string;
+  email: string;
   valor_atual: string;
   operadora: string;
   tipo_plano: string;
@@ -56,6 +59,8 @@ export interface ConversationSummary {
   lead_status: string;
   last_message_at: string;
   ai_summary: string;
+  cenario: string;
+  last_followup_day: number;
 }
 
 export interface ConversationDetail {
@@ -64,6 +69,7 @@ export interface ConversationDetail {
   history: { role: string; content: string; ts?: string }[];
   stage: string;
   slot_str: string;
+  cenario: string;
 }
 
 export interface AgendaEvent {
@@ -89,6 +95,39 @@ export interface LogBlock {
   content: string;
 }
 
+export interface LlmInfo {
+  primary?: string;
+  fallback?: string;
+  openai_model?: string;
+  openai_model_fallback?: string;
+  openrouter_model?: string;
+  openai_configured?: boolean;
+  openrouter_configured?: boolean;
+  calendar_id?: string;
+  lawyer_email?: string;
+  meeting_duration_min?: number;
+  scheduling_slots_count?: number;
+  error?: string;
+}
+
+export const CENARIO_LABEL: Record<string, string> = {
+  falso_coletivo: "Falso Coletivo",
+  multifamiliar: "Multifamiliar",
+  coletivo_adesao: "Coletivo Adesão",
+  individual: "Individual/Familiar",
+  inviavel: "Inviável",
+  indefinido: "Indefinido",
+};
+
+export const CENARIO_COLOR: Record<string, string> = {
+  falso_coletivo: "success",
+  multifamiliar: "info",
+  coletivo_adesao: "warning",
+  individual: "secondary",
+  inviavel: "danger",
+  indefinido: "secondary",
+};
+
 export const api = {
   dashboardStats: () => call<DashboardStats>("/api/admin/dashboard"),
   conversations: () => call<ConversationSummary[]>("/api/admin/conversations"),
@@ -102,5 +141,6 @@ export const api = {
       body: JSON.stringify({ content }),
     }),
   logs: () => call<LogBlock[]>("/api/admin/logs"),
+  llmInfo: () => call<LlmInfo>("/api/admin/llm-info"),
   health: () => call<{ status: string }>("/health"),
 };

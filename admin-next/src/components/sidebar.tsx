@@ -9,6 +9,7 @@ import {
   ScrollText,
   Settings2,
   QrCode,
+  Sliders,
   Scale,
   LogOut,
   ExternalLink,
@@ -25,6 +26,7 @@ const items = [
   { href: "/logs", label: "Logs", icon: ScrollText },
   { href: "/control", label: "Controle", icon: Settings2 },
   { href: "/qr", label: "QR Code", icon: QrCode },
+  { href: "/settings", label: "Configurações", icon: Sliders },
 ];
 
 export function Sidebar() {

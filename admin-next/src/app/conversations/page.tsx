@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Search, MessageCircle, CheckCircle2, Clock, UserCog, Phone } from "lucide-react";
-import { api, ConversationSummary } from "@/lib/api";
+import { api, ConversationSummary, CENARIO_LABEL, CENARIO_COLOR } from "@/lib/api";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge, Input, Skeleton } from "@/components/ui/index";
@@ -133,10 +133,17 @@ function ConvCard({ p, index }: { p: ConversationSummary; index: number }) {
                 {p.operadora && p.operadora !== "?" && <span>📋 {p.operadora}</span>}
                 {p.valor_atual && p.valor_atual !== "?" && <span>💰 R$ {p.valor_atual}</span>}
                 {p.tipo_plano && p.tipo_plano !== "?" && <span>📑 {p.tipo_plano}</span>}
+                {p.email && <span>✉️ {p.email}</span>}
                 {p.confirmed_slot_str && <span className="text-emerald-500">📅 {p.confirmed_slot_str}</span>}
+                {p.last_followup_day > 0 && <span className="text-amber-500">↻ D+{p.last_followup_day}</span>}
               </div>
             </div>
-            <div className="hidden md:flex items-center gap-2 shrink-0">
+            <div className="hidden md:flex items-center gap-2 shrink-0 flex-wrap justify-end">
+              {p.cenario && p.cenario !== "indefinido" && (
+                <Badge variant={(CENARIO_COLOR[p.cenario] || "secondary") as any} className="text-[10px]">
+                  {CENARIO_LABEL[p.cenario] || p.cenario}
+                </Badge>
+              )}
               <Badge variant="secondary" className="text-[10px]">{p.stage}</Badge>
               {statusBadge(p.lead_status)}
             </div>

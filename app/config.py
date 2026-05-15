@@ -46,6 +46,11 @@ class Settings:
     chroma_persist_dir: str
     knowledge_dir: str
     embedding_model: str
+    openai_api_key: str
+    openai_model: str
+    openai_model_fallback: str
+    llm_primary: str
+    llm_fallback: str
     google_sa_path: str
     google_calendar_id: str
     meeting_duration_min: int
@@ -88,6 +93,11 @@ def get_settings() -> Settings:
         chroma_persist_dir=os.getenv("CHROMA_PERSIST_DIR", "./data/chroma"),
         knowledge_dir=os.getenv("KNOWLEDGE_DIR", "./app/knowledge"),
         embedding_model=os.getenv("EMBEDDING_MODEL", "keyword-tfidf-local"),
+        openai_api_key=os.getenv("OPENAI_API_KEY", ""),
+        openai_model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+        openai_model_fallback=os.getenv("OPENAI_MODEL_FALLBACK", "gpt-4o"),
+        llm_primary=os.getenv("LLM_PRIMARY", "openrouter"),
+        llm_fallback=os.getenv("LLM_FALLBACK", "openai"),
         google_sa_path=os.getenv("GOOGLE_SA_PATH", "/app/secrets/google-sa.json"),
         google_calendar_id=os.getenv("GOOGLE_CALENDAR_ID", "primary"),
         meeting_duration_min=_get_env_int("MEETING_DURATION_MIN", 30),

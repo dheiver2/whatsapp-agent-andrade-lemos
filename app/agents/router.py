@@ -499,6 +499,12 @@ class IntentRouter:
         if cnpj_num or cnpj_mention or empresa_mention:
             data["tipo_plano"] = "coletivo empresarial"
 
+        # Detect if beneficiaries are family members
+        if any(term in text_lower for term in ["família", "familia", "esposa", "esposo", "marido", "filho", "filha", "dependente", "minha mae", "minha mãe", "meu pai"]):
+            data["beneficiarios_familia"] = "sim"
+        elif any(term in text_lower for term in ["só eu", "so eu", "sozinho", "apenas eu", "diferentes", "não é familia", "nao é familia"]):
+            data["beneficiarios_familia"] = "não"
+
         # Detect data de adesão (DD/MM/YYYY, MM/YYYY, ou apenas ano)
         date_match = re.search(r"\b(\d{1,2}/\d{1,2}/\d{2,4})\b", text)
         if date_match:

@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft, Check, CheckCheck, Calendar, User } from "lucide-react";
-import { api } from "@/lib/api";
+import { api, CENARIO_LABEL, CENARIO_COLOR } from "@/lib/api";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge, Skeleton } from "@/components/ui/index";
@@ -44,6 +44,27 @@ export default function ConvDetailPage() {
               <DataRow label="Modalidade" value={data?.profile?.tipo_plano} />
             </CardContent>
           </Card>
+
+          {data?.cenario && data.cenario !== "indefinido" && (
+            <Card className="border-2" style={{ borderColor: "hsl(var(--primary))" }}>
+              <CardContent className="p-5">
+                <h3 className="text-xs uppercase text-muted-foreground font-semibold mb-2">Diagnóstico Natasha</h3>
+                <Badge variant={(CENARIO_COLOR[data.cenario] || "secondary") as any} className="text-sm">
+                  {CENARIO_LABEL[data.cenario] || data.cenario}
+                </Badge>
+              </CardContent>
+            </Card>
+          )}
+
+          {(data?.profile?.name_full || data?.profile?.email) && (
+            <Card>
+              <CardContent className="p-5">
+                <h3 className="text-xs uppercase text-muted-foreground font-semibold mb-3">Contato confirmado</h3>
+                {data.profile.name_full && <DataRow label="Nome completo" value={data.profile.name_full} />}
+                {data.profile.email && <DataRow label="Email" value={data.profile.email} />}
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardContent className="p-5">

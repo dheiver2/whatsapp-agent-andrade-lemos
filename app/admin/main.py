@@ -20,6 +20,16 @@ from fastapi.templating import Jinja2Templates
 import sys
 sys.path.insert(0, "/app")
 
+try:
+    sys.path.insert(0, '/app')
+    from app.agents.cenario import classify_cenario as _cls_cenario
+except Exception:
+    def _cls_cenario(p): return "indefinido"
+
+def classify_cenario(p):
+    return _cls_cenario(p)
+
+
 ADMIN_USER = os.getenv("ADMIN_USER", "admin")
 ADMIN_PASS = os.getenv("ADMIN_PASS", "andradelemos2026")
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
@@ -168,6 +178,26 @@ async def api_dashboard(user: str = Depends(auth)):
         except Exception:
             pass
 
+    # Distribuição por cenário
+    cenarios = Counter()
+    cenario_labels = {
+        "falso_coletivo": "Falso Coletivo",
+        "multifamiliar": "Multifamiliar",
+        "coletivo_adesao": "Coletivo Adesão",
+        "individual": "Individual/Familiar",
+        "inviavel": "Inviável",
+        "indefinido": "Indefinido",
+    }
+    for p in profiles:
+        c = classify_cenario(p)
+        cenarios[cenario_labels.get(c, c)] += 1
+
+    # Coletas multimodais (audios/imagens processados)
+    multimodal = {"audios": 0, "imagens": 0}
+    for p in profiles:
+        multimodal["audios"] += int(p.get("_count_audio", 0))
+        multimodal["imagens"] += int(p.get("_count_image", 0))
+
     return {
         "wa_status": wa_status,
         "api_status": api_status,
@@ -181,6 +211,8 @@ async def api_dashboard(user: str = Depends(auth)):
         "por_operadora": [{"name": k, "value": v} for k, v in operadoras.most_common(8)],
         "funil": [{"etapa": k.replace("_", " "), "count": v} for k, v in funil.most_common(10)],
         "por_modalidade": [{"name": k, "value": v} for k, v in modalidades.most_common(8)],
+        "por_cenario": [{"name": k, "value": v} for k, v in cenarios.most_common()],
+        "multimodal": multimodal,
     }
 
 
@@ -195,6 +227,8 @@ async def api_conversations(user: str = Depends(auth)):
         out.append({
             "phone": p["_phone"],
             "name": p.get("name", "?"),
+            "name_full": p.get("name_full", ""),
+            "email": p.get("email", ""),
             "valor_atual": p.get("valor_atual", "?"),
             "operadora": p.get("operadora", "?"),
             "tipo_plano": p.get("tipo_plano", "?"),
@@ -203,6 +237,8 @@ async def api_conversations(user: str = Depends(auth)):
             "lead_status": p.get("lead_status", "?"),
             "last_message_at": p.get("handoff_updated_at", ""),
             "ai_summary": p.get("ai_summary", ""),
+            "cenario": classify_cenario(p),
+            "last_followup_day": int(p.get("last_followup_day") or 0),
         })
     out.sort(key=lambda x: x["confirmed_slot_str"] or "", reverse=True)
     return out
@@ -220,7 +256,14 @@ async def api_conversation(phone: str, user: str = Depends(auth)):
     slot_str = ""
     if isinstance(slot, dict) and slot.get("start"):
         slot_str = slot["start"][:16].replace("T", " ")
-    return {"phone": phone, "profile": profile, "history": history, "stage": stage, "slot_str": slot_str}
+    return {
+        "phone": phone,
+        "profile": profile,
+        "history": history,
+        "stage": stage,
+        "slot_str": slot_str,
+        "cenario": classify_cenario(profile),
+    }
 
 
 @app.get("/api/admin/agenda")
@@ -301,6 +344,8 @@ async def api_knowledge_save(filename: str, body: dict = Body(...), user: str = 
 async def api_logs(user: str = Depends(auth)):
     files = [
         ("/var/log/whatsapp-watchdog.log", "Watchdog"),
+        ("/var/log/whatsapp-followup.log", "Follow-up D+N (cron 1h)"),
+        ("/var/log/whatsapp-reminder.log", "Lembrete reunião (cron 5min)"),
         ("/var/log/whatsapp-backup.log", "Backup auth_state"),
         ("/var/log/whatsapp-git-autocommit.log", "Auto-commit Git"),
     ]
@@ -313,6 +358,29 @@ async def api_logs(user: str = Depends(auth)):
             content = "(arquivo nao encontrado)"
         out.append({"label": label, "path": path, "content": content or "(vazio)"})
     return out
+
+
+@app.get("/api/admin/llm-info")
+async def api_llm_info(user: str = Depends(auth)):
+    """Retorna config dos LLMs."""
+    try:
+        from app.config import get_settings
+        s = get_settings()
+        return {
+            "primary": s.llm_primary,
+            "fallback": s.llm_fallback,
+            "openai_model": s.openai_model,
+            "openai_model_fallback": getattr(s, "openai_model_fallback", ""),
+            "openrouter_model": s.openrouter_model,
+            "openai_configured": bool(s.openai_api_key),
+            "openrouter_configured": bool(s.openrouter_api_key),
+            "calendar_id": s.google_calendar_id,
+            "lawyer_email": getattr(s, "lawyer_email", ""),
+            "meeting_duration_min": s.meeting_duration_min,
+            "scheduling_slots_count": s.scheduling_slots_count,
+        }
+    except Exception as e:
+        return {"error": str(e)[:200]}
 
 
 @app.get("/health")

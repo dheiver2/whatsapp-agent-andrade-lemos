@@ -30,6 +30,7 @@ from app.outbound.service import (
 from app.rag.vectorstore import load_knowledge_base
 from app.rag.visualization import get_all_chunks, get_graph_data, search_with_details
 from app.whatsapp.handlers import IncomingMessage, handle_message
+from app.whatsapp.multimodal import transcribe_audio, extract_image
 
 STATIC_DIR = Path(__file__).parent / "static"
 
@@ -281,6 +282,8 @@ routes = [
     Route("/api/v1/knowledge/chunks", knowledge_chunks, methods=["GET"]),
     Route("/api/v1/knowledge/graph", knowledge_graph, methods=["GET"]),
     Route("/api/v1/knowledge/search", knowledge_search, methods=["GET"]),
+    Route("/api/v1/transcribe", transcribe_audio, methods=["POST"]),
+    Route("/api/v1/extract-image", extract_image, methods=["POST"]),
     Route("/dashboard", dashboard, methods=["GET"]),
 ]
 

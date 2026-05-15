@@ -10,6 +10,7 @@ import {
   WifiOff,
   Wifi,
   Activity,
+  Sparkles,
 } from "lucide-react";
 import {
   AreaChart,
@@ -174,6 +175,52 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Cenários — diagnóstico Natasha */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Sparkles className="size-4 text-primary" /> Diagnóstico por cenário
+            </CardTitle>
+            <CardDescription>
+              Como a Natasha está classificando os casos (Falso Coletivo, Multifamiliar, etc.)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="h-64">
+            {isLoading ? (
+              <Skeleton className="h-full" />
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data?.por_cenario || []} layout="vertical" margin={{ left: 80 }}>
+                  <XAxis type="number" hide />
+                  <YAxis dataKey="name" type="category" width={140} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--popover))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                    }}
+                  />
+                  <Bar dataKey="value" radius={[0, 6, 6, 0]}>
+                    {(data?.por_cenario || []).map((c, i) => (
+                      <Cell
+                        key={i}
+                        fill={
+                          c.name === "Falso Coletivo" ? "#25D366"
+                          : c.name === "Multifamiliar" ? "#3498DB"
+                          : c.name === "Coletivo Adesão" ? "#D4AF37"
+                          : c.name === "Individual/Familiar" ? "#8E44AD"
+                          : c.name === "Inviável" ? "#E74C3C"
+                          : "#7F8C8D"
+                        }
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Distribuições */}
         <div className="grid gap-4 lg:grid-cols-2">

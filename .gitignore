@@ -26,3 +26,5 @@ chroma_data/
 whatsapp_auth/
 .netrc
 .permtest
+
+*.bak_*
