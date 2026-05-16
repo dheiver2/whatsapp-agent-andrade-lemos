@@ -31,14 +31,16 @@ const items = [
   { href: "/settings", label: "Configurações", icon: Sliders },
 ];
 
+function doLogout(router: ReturnType<typeof useRouter>) {
+  if (typeof window !== "undefined") {
+    sessionStorage.removeItem("admin_creds");
+  }
+  router.push("/login");
+}
+
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-
-  const logout = () => {
-    sessionStorage.removeItem("admin_creds");
-    router.push("/login");
-  };
 
   return (
     <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r bg-card/50 backdrop-blur">
@@ -81,7 +83,7 @@ export function Sidebar() {
         </a>
       </nav>
       <div className="p-3 border-t flex items-center justify-between gap-2">
-        <Button variant="ghost" size="sm" onClick={logout} className="text-muted-foreground hover:text-destructive">
+        <Button variant="ghost" size="sm" onClick={() => doLogout(router)} className="text-muted-foreground hover:text-destructive">
           <LogOut className="size-4 mr-1.5" /> Sair
         </Button>
         <ThemeToggle />
@@ -92,10 +94,12 @@ export function Sidebar() {
 
 export function MobileNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  // 4 principais + Sair
   const mobileItems = items.slice(0, 4);
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="grid grid-cols-4">
+      <div className="grid grid-cols-5">
         {mobileItems.map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -113,6 +117,14 @@ export function MobileNav() {
             </Link>
           );
         })}
+        <button
+          type="button"
+          onClick={() => doLogout(router)}
+          className="flex flex-col items-center gap-1 py-3 text-[10px] text-muted-foreground hover:text-destructive transition"
+        >
+          <LogOut className="size-5" />
+          <span className="truncate">Sair</span>
+        </button>
       </div>
     </nav>
   );
